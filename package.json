@@ -1,11 +1,13 @@
 {
     "name": "@mmorrissey5961/install-symlinks",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Install local packages without 'npm link'",
     "main": "index.js",
-    "bin": "./dist/symlink.js",
+    "bin": {
+        "symlink": "./dist/install-symlinks.js"
+    },
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "watch": "tsc --watch"
     },
     "keywords": [
         "link",
