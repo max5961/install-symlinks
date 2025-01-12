@@ -1,0 +1,30 @@
+{
+    "name": "@mmorrissey5961/install-symlinks",
+    "version": "1.0.0",
+    "description": "Install local packages without 'npm link'",
+    "main": "index.js",
+    "bin": "./dist/symlink.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+        "link",
+        "symbolic",
+        "sym",
+        "symlink",
+        "local",
+        "install"
+    ],
+    "author": "Maxwell Morrissey",
+    "license": "MIT",
+    "type": "module",
+    "dependencies": {
+        "@types/yargs": "^17.0.33",
+        "detect-indent": "^7.0.1",
+        "yargs": "^17.7.2"
+    },
+    "devDependencies": {
+        "@types/node": "^22.10.5",
+        "typescript": "^5.7.3"
+    }
+}
