@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import detectIndent from "detect-indent";
+import { Config } from "./types.js";
 
 export const Path = {
     NodeModules: path.resolve("node_modules") + "/",
@@ -13,38 +14,45 @@ export function errorMsg(msg: string): string {
     return `local-symlinks: ${msg}`;
 }
 
-export function getLocalPaths(): string[] {
+export function getConfig(): Config {
     const json = fs.readFileSync(path.resolve("package.json"), { encoding: "utf-8" });
     const pkgjson = JSON.parse(json);
     const paths = pkgjson[PropertyName] as unknown;
 
-    if (!Array.isArray(paths)) {
-        throw new Error(errorMsg("Configuration must be of type 'array'"));
+    if (typeof paths !== "object" || paths === null) {
+        throw new Error(errorMsg("Configuration must be of type 'object'"));
     }
 
-    if (!paths.every((path) => typeof path === "string")) {
-        throw new Error(
-            errorMsg("Configuration array must only accept arrays as values"),
-        );
+    const isValid = Object.entries(paths).every(([k, v]) => {
+        if (typeof k !== "string") return false;
+        if (!Array.isArray(v)) return false;
+        return v.every((value) => typeof value === "string");
+    });
+
+    if (!isValid) {
+        throw new Error(errorMsg("Invalid configuration"));
     }
 
-    return paths.map(resolvePath);
+    return paths as Config;
 }
 
-export function getLinkedPackageName(localPath: string): string {
-    const json = fs.readFileSync(path.resolve(`${localPath}/package.json`), "utf-8");
+export function getLinkedPackageName(linkPath: string): string {
+    const json = fs.readFileSync(path.resolve(`${linkPath}/package.json`), "utf-8");
     const pkgjson = JSON.parse(json);
     return pkgjson["name"] as string;
 }
 
-export function canResolve(localPath: string): boolean {
-    const resolved = path.resolve(localPath);
-    return fs.existsSync(resolved);
+export function resolvePath(linkPath: string): string {
+    const resolved = path.resolve(linkPath);
+    if (fs.existsSync(resolved)) {
+        return resolved;
+    } else {
+        throw new Error(errorMsg(`Cannot resolve path: ${linkPath}`));
+    }
 }
 
-export function resolvePath(localPath: string): string {
-    if (canResolve(localPath)) return path.resolve(localPath);
-    throw new Error(errorMsg(`Cannot resolve path: ${localPath}`));
+export function toArray(strOrArray: string | string[]): string[] {
+    return [...(Array.isArray(strOrArray) ? strOrArray : strOrArray)];
 }
 
 export function getPackage(): { [key: string]: any } {

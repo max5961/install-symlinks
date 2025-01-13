@@ -8,21 +8,32 @@ import * as Operations from "./operations.js";
 
 fs.mkdirSync(path.resolve(Util.Path.NodeModules), { recursive: true });
 
-args.install = (args.install ?? []).map(Util.resolvePath);
-args.uninstall = (args.uninstall ?? []).map(Util.resolvePath);
+const remove = (args.remove ?? []) as string[];
+const update = args.update;
+const clean = args.clean;
 
-// If there are install/uninstall arguments, only operate on those
-if (args.install.length || args.uninstall.length) {
-    Operations.manage(args.install, "install");
-    Operations.manage(args.uninstall, "uninstall");
-    process.exit();
+const config = Util.getConfig();
+
+if (update) {
+    Operations.manage(config, "update");
 }
 
-const localPaths = Util.getLocalPaths();
-
-if (args.clean) {
-    Operations.manage(localPaths, "uninstall");
-    process.exit();
+if (clean) {
+    Operations.manage(config, "clean");
 }
 
-Operations.manage(localPaths, "install");
+if (remove.length) {
+    const removeConfig: { [key: string]: string[] } = {};
+
+    for (const linkpath of remove) {
+        const resolvedLinkpath = Util.resolvePath(linkpath);
+        for (const key in config) {
+            const resolvedKey = Util.resolvePath(key);
+            if (resolvedKey === resolvedLinkpath) {
+                removeConfig[resolvedKey] = config[key];
+            }
+        }
+    }
+
+    Operations.manage(removeConfig, "remove");
+}

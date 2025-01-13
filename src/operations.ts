@@ -1,85 +1,65 @@
-import { args } from "./parseArgs.js";
 import path from "node:path";
-import fs from "node:fs";
 import { spawnSync } from "node:child_process";
+import fs from "node:fs";
 import * as Util from "./util.js";
+import { Config } from "./types.js";
+import { args } from "./parseArgs.js";
 
-export function manage(localPaths: string[], operation: "install" | "uninstall") {
-    localPaths.forEach((localPath) => {
-        if (!Util.canResolve(localPath)) {
-            return console.log(
-                Util.errorMsg(`Could not install ${localPath}. Path is not valid`),
-            );
+const FORCE = args.force ? "--force" : "";
+
+export function manage(config: Config, operation: "clean" | "remove" | "update") {
+    Object.entries(config).forEach(([dirpath, entrypoints]) => {
+        entrypoints = Util.toArray(entrypoints);
+        const resolvedDirpath = Util.resolvePath(dirpath);
+
+        const pkgname = Util.getLinkedPackageName(dirpath);
+
+        // Uninstall package
+        spawnSync("npm", ["uninstall", pkgname, FORCE], { stdio: "inherit" });
+
+        if (operation === "update") {
+            spawnSync("npm", ["install", resolvedDirpath, FORCE], { stdio: "inherit" });
+            linkEntryPoints(resolvedDirpath, entrypoints);
         }
 
-        const target = path.resolve(localPath);
-
-        // If --force, do not install via npm before creating symlink (no dependency checks)
-        // The package also won't be in your dependencies unless it already was
-        if (!args.force && operation === "install") {
-            const { status } = spawnSync("npm", [operation, target], {
-                stdio: "inherit",
-            });
-
-            if (status !== 0) {
-                Util.errorMsg(`Could not install: ${localPath}`);
-                Util.errorMsg(
-                    "Use --force (dangerous operation) to forcefully install the symlink",
-                );
-            }
-        }
-
-        if (operation === "install") {
-            createSymlink(localPath);
-        } else {
-            remove(localPath);
+        if (operation === "remove" || operation === "clean") {
+            removeFromConfig(dirpath);
         }
     });
 }
 
-export function createSymlink(localPath: string) {
-    if (!Util.canResolve(localPath)) {
-        return console.log(`Could not resolve path: ${localPath}`);
+export function removeFromConfig(dirpath: string) {
+    const resolvedDirpath = Util.resolvePath(dirpath);
+    const config = Util.getConfig();
+
+    let targetKey = "";
+
+    for (const key in config) {
+        const resolvedKey = Util.resolvePath(key);
+        if (resolvedKey === resolvedDirpath) {
+            targetKey = key;
+            break;
+        }
     }
 
-    const target = path.resolve(localPath);
-    const pkgName = Util.getLinkedPackageName(localPath);
-    const pointer = path.resolve(Util.Path.NodeModules + pkgName);
-
-    // Forcefully remove the node_modules directory if it exists
-    fs.rmSync(pointer, { recursive: true, force: true });
-
-    fs.symlinkSync(target, pointer);
-
-    const pkgjson = Util.getPackage();
-
-    const configPaths = ((pkgjson[Util.PropertyName] as string[]) ?? []).slice();
-
-    if (
-        !configPaths.some((str) => {
-            return path.resolve(str) === path.resolve(localPath);
-        })
-    ) {
-        configPaths.push(path.relative(process.cwd(), localPath));
+    if (config[targetKey]) {
+        delete config[targetKey];
     }
 
-    pkgjson[Util.PropertyName] = configPaths;
-
-    Util.writePackage(pkgjson);
+    const pkg = Util.getPackage();
+    pkg[Util.PropertyName] = config;
+    Util.writePackage(pkg);
 }
 
-export function remove(localPath: string) {
-    // Can only 'npm uninstall bar', 'npm uninstall ../bar' does not work.
-    const targetPathPackageName = Util.getLinkedPackageName(localPath);
-    spawnSync("npm", ["uninstall", targetPathPackageName], { stdio: "inherit" });
+export function linkEntryPoints(dirpath: string, entrypoints: string[]): void {
+    dirpath = Util.resolvePath(dirpath);
+    const pkgname = Util.getLinkedPackageName(dirpath);
 
-    const pkgjson = Util.getPackage();
+    entrypoints.forEach((entry) => {
+        const target = path.join(dirpath, entry);
+        const pointer = path.join(path.resolve("node_modules"), pkgname, entry);
 
-    pkgjson[Util.PropertyName] = (pkgjson[Util.PropertyName] as string[]).filter(
-        (str) => {
-            path.resolve(str) !== path.resolve(localPath);
-        },
-    );
-
-    Util.writePackage(pkgjson);
+        fs.rmSync(pointer, { force: true });
+        fs.symlinkSync(target, pointer);
+    });
 }

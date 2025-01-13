@@ -6,22 +6,22 @@ export const args = yargs(hideBin(process.argv))
         type: "boolean",
         desc: "Remove all symlinks in localSymlinks and dependencies",
     })
-    .option("force", {
-        type: "boolean",
-        desc: "Skip dependency checks before creating symlink",
-    })
-    .option("install", {
-        type: "string",
-        desc: "Install a local package or packages by path",
-        array: true,
-        default: [],
-        requiresArg: true,
-    })
-    .option("uninstall", {
+    .option("remove", {
         type: "string",
         desc: "Uninstall a local package or packages by path",
         array: true,
         default: [],
         requiresArg: true,
+    })
+    .option("update", {
+        type: "boolean",
+        desc: "Update all local packages",
+        requiresArg: false,
+    })
+    .option("force", {
+        type: "boolean",
+        desc: "Force install/uninstall when updating",
+        default: false,
+        requiresArg: false,
     })
     .parseSync();
