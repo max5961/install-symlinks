@@ -1,6 +1,6 @@
 {
     "name": "@mmorrissey5961/install-symlinks",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "Install local packages without 'npm link'",
     "main": "index.js",
     "bin": {

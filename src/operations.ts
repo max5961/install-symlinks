@@ -2,7 +2,6 @@ import { args } from "./parseArgs.js";
 import path from "node:path";
 import fs from "node:fs";
 import { spawnSync } from "node:child_process";
-import detectIndent from "detect-indent";
 import * as Util from "./util.js";
 
 export function manage(localPaths: string[], operation: "install" | "uninstall") {
@@ -17,7 +16,7 @@ export function manage(localPaths: string[], operation: "install" | "uninstall")
 
         // If --force, do not install via npm before creating symlink (no dependency checks)
         // The package also won't be in your dependencies unless it already was
-        if (!args.force) {
+        if (!args.force && operation === "install") {
             const { status } = spawnSync("npm", [operation, target], {
                 stdio: "inherit",
             });
@@ -33,7 +32,7 @@ export function manage(localPaths: string[], operation: "install" | "uninstall")
         if (operation === "install") {
             createSymlink(localPath);
         } else {
-            removeFromConfig(localPath);
+            remove(localPath);
         }
     });
 }
@@ -44,19 +43,37 @@ export function createSymlink(localPath: string) {
     }
 
     const target = path.resolve(localPath);
-    const pkgName = Util.getPackageName(localPath);
+    const pkgName = Util.getLinkedPackageName(localPath);
     const pointer = path.resolve(Util.Path.NodeModules + pkgName);
 
     // Forcefully remove the node_modules directory if it exists
     fs.rmSync(pointer, { recursive: true, force: true });
 
     fs.symlinkSync(target, pointer);
+
+    const pkgjson = Util.getPackage();
+
+    const configPaths = ((pkgjson[Util.PropertyName] as string[]) ?? []).slice();
+
+    if (
+        !configPaths.some((str) => {
+            return path.resolve(str) === path.resolve(localPath);
+        })
+    ) {
+        configPaths.push(path.relative(process.cwd(), localPath));
+    }
+
+    pkgjson[Util.PropertyName] = configPaths;
+
+    Util.writePackage(pkgjson);
 }
 
-export function removeFromConfig(localPath: string) {
-    const json = fs.readFileSync(path.resolve("package.json"), "utf-8");
-    const indent = detectIndent(json).indent || "    ";
-    const pkgjson = JSON.parse(json);
+export function remove(localPath: string) {
+    // Can only 'npm uninstall bar', 'npm uninstall ../bar' does not work.
+    const targetPathPackageName = Util.getLinkedPackageName(localPath);
+    spawnSync("npm", ["uninstall", targetPathPackageName], { stdio: "inherit" });
+
+    const pkgjson = Util.getPackage();
 
     pkgjson[Util.PropertyName] = (pkgjson[Util.PropertyName] as string[]).filter(
         (str) => {
@@ -64,9 +81,5 @@ export function removeFromConfig(localPath: string) {
         },
     );
 
-    fs.writeFileSync(
-        path.resolve("package.json"),
-        JSON.stringify(pkgjson, null, indent),
-        "utf-8",
-    );
+    Util.writePackage(pkgjson);
 }
