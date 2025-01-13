@@ -4,18 +4,20 @@ import { hideBin } from "yargs/helpers";
 export const args = yargs(hideBin(process.argv))
     .option("clean", {
         type: "boolean",
-        desc: "Remove all symlinks in localSymlinks and dependencies",
+        desc: "Uninstall all packages in 'directlinks'",
+        default: false,
+        requiresArg: false,
     })
     .option("remove", {
         type: "string",
-        desc: "Uninstall a local package or packages by path",
+        desc: "Uninstall package(s) in 'directlinks' by path",
         array: true,
         default: [],
         requiresArg: true,
     })
     .option("update", {
         type: "boolean",
-        desc: "Update all local packages",
+        desc: "Update all packages in 'directlinks'",
         requiresArg: false,
     })
     .option("force", {

@@ -8,10 +8,11 @@ export const Path = {
     PkgJson: path.resolve("package.json"),
 };
 
-export const PropertyName = "local-symlinks";
+export const PropertyName = "directlinks";
 
 export function errorMsg(msg: string): string {
-    return `local-symlinks: ${msg}`;
+    console.log(`directlink: ${msg}`);
+    process.exit(1);
 }
 
 export function getConfig(): Config {
@@ -20,7 +21,8 @@ export function getConfig(): Config {
     const paths = pkgjson[PropertyName] as unknown;
 
     if (typeof paths !== "object" || paths === null) {
-        throw new Error(errorMsg("Configuration must be of type 'object'"));
+        errorMsg("Configuration must be of type 'object'");
+        process.exit();
     }
 
     const isValid = Object.entries(paths).every(([k, v]) => {
@@ -30,7 +32,8 @@ export function getConfig(): Config {
     });
 
     if (!isValid) {
-        throw new Error(errorMsg("Invalid configuration"));
+        errorMsg("Invalid configuration");
+        process.exit();
     }
 
     return paths as Config;
@@ -47,7 +50,8 @@ export function resolvePath(linkPath: string): string {
     if (fs.existsSync(resolved)) {
         return resolved;
     } else {
-        throw new Error(errorMsg(`Cannot resolve path: ${linkPath}`));
+        errorMsg(`Cannot resolve path: ${linkPath}`);
+        process.exit();
     }
 }
 

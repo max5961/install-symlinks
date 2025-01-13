@@ -41,4 +41,4 @@ if (remove.length) {
     process.exit();
 }
 
-throw new Error("Provide an argument: npx symlink --help");
+Util.errorMsg("Provide an argument: npx directlink --help");

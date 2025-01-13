@@ -1,48 +1,52 @@
 _This is an experimental package used to locally install npm packages from your
-system using symlinks instead of using **npm link**.  This means you don't need
-to re-install updated linked packages.  Read **Warning** before using._
+system instead of using **npm link**.  With this package, nothing is installed
+globally.  You create a 'directlinks' object in your package.json, which handles
+installing, updating, and removing._
 
 ---
+This package essentially uninstalls and re-installs packages when you use the
+`--update` flag.  It also has the option to symlink entry points, but this
+feature is **highly unstable** and will likely cause problems depending on your
+package.
 
-# Warning
+## Warning
 
-This package essentially does two things:
-
-1. Installs local packages from your system using npm.
-2. Removes and replaces the entry point(s) for your package with a symlink.
-
-If dependency changes made to your linked package after the package has been
-linked are breaking to your project, this will silently ignore that and continue
-to use the updated package.  If your linked package updates dependencies, you
-should run `npx symlink --update` again.
+If you have symlinked entry points, dependency changes to your linked package
+will be silently ignored.
 
 ---
 
 ## Usage
-
 ```sh
-npm install --save-dev @mmorrissey5961/install-symlinks
+npm install --save-dev @mmorrissey5961/directlink
 ```
 
 ```sh
-"local-symlinks": {
+"directlinks": {
+    "../../foo": []
+}
+```
+
+To symlink an entry point, add it to the entry points array.
+```sh
+"directlinks": {
     "../../foo": ["index.js"]
 }
 ```
 
-#### Install all packages in `local-symlinks`
+#### Install all packages in `directlinks`
 ```sh
-npx symlink --update
+npx directlink --update
 ```
 
-#### Remove a linked package from `local-symlinks`
+#### Remove a linked package from `directlinks`
 ```sh
-npx symlink --remove foo
+npx directlink --remove foo
 ```
 
-#### Remove all linked pakages in `local-symlinks`
+#### Remove all linked pakages in `directlinks`
 ```sh
-npx symlink --clean
+npx directlink --clean
 ```
 
 

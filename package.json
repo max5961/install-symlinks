@@ -1,10 +1,10 @@
 {
-    "name": "@mmorrissey5961/install-symlinks",
-    "version": "1.0.2",
+    "name": "@mmorrissey5961/directlink",
+    "version": "1.0.0",
     "description": "Install local packages without 'npm link'",
     "main": "index.js",
     "bin": {
-        "symlink": "./dist/symlink.js"
+        "directlink": "./dist/directlink.js"
     },
     "scripts": {
         "watch": "tsc --watch"
