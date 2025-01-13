@@ -16,10 +16,12 @@ const config = Util.getConfig();
 
 if (update) {
     Operations.manage(config, "update");
+    process.exit();
 }
 
 if (clean) {
     Operations.manage(config, "clean");
+    process.exit();
 }
 
 if (remove.length) {
@@ -36,4 +38,7 @@ if (remove.length) {
     }
 
     Operations.manage(removeConfig, "remove");
+    process.exit();
 }
+
+throw new Error("Provide an argument: npx symlink --help");

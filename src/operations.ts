@@ -59,7 +59,11 @@ export function linkEntryPoints(dirpath: string, entrypoints: string[]): void {
         const target = path.join(dirpath, entry);
         const pointer = path.join(path.resolve("node_modules"), pkgname, entry);
 
-        fs.rmSync(pointer, { force: true });
+        const stats = fs.lstatSync(pointer);
+
+        stats.isFile() && fs.rmSync(pointer, { force: true });
+        stats.isSymbolicLink() && fs.unlinkSync(pointer);
+
         fs.symlinkSync(target, pointer);
     });
 }
