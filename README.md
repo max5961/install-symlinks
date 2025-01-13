@@ -1,6 +1,6 @@
-_This is an experimental package used to install your own local npm packages
-with symlinks instead of using **npm link**.  This means you don't need to
-re-install updated linked packages.  Read **Warning** before using._
+_This is an experimental package used to locally install npm packages from your
+system using symlinks instead of using **npm link**.  This means you don't need
+to re-install updated linked packages.  Read **Warning** before using._
 
 ---
 
@@ -15,14 +15,14 @@ This package essentially does two things:
 If dependency changes made to your linked package after the package has been
 linked are breaking to your project, this will silently ignore that and continue
 to use the updated package.  If your linked package updates dependencies, you
-should run 'npx symlink' again.
+should run `npx symlink` again.
 
 ---
 
 ## Usage
 
 ```sh
-npm install @mmorrissey5961/install-symlinks
+npm install --save-dev @mmorrissey5961/install-symlinks
 ```
 
 Add a `local-symlinks` array to your `package.json` and then run: `npx symlink`.
